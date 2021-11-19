@@ -102,8 +102,10 @@ class HFNetDatabase(sqlite3.Connection):
     def read_keypoints_from_image_id(self, image_id):
         cursor = self.execute(
             'SELECT pixel FROM keypoints WHERE image_id=?;',  (image_id,))
-        row = next(cursor)
-        keypoints = np.fromstring(row[0], dtype=np.float32).reshape(-1, 2)
+        keypoints = cursor.fetchone()
+        if keypoints is None:
+            return None
+        keypoints = np.fromstring(keypoints[0], dtype=np.float32).reshape(-1, 2)
         return keypoints
 
 

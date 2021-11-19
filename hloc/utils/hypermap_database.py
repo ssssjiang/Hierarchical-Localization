@@ -102,8 +102,8 @@ def blob_to_array(blob, dtype, shape=(-1,)):
 class HyperMapDatabase(sqlite3.Connection):
 
     @staticmethod
-    def connect(database_path):
-        return sqlite3.connect(str(database_path), factory=HyperMapDatabase)
+    def connect(database_path, check_same_thread=True):
+        return sqlite3.connect(str(database_path), factory=HyperMapDatabase, check_same_thread=check_same_thread)
 
     def __init__(self, *args, **kwargs):
         super(HyperMapDatabase, self).__init__(*args, **kwargs)
@@ -187,22 +187,27 @@ class HyperMapDatabase(sqlite3.Connection):
 
     def read_image_id_from_name(self, image_name):
         cursor = self.execute('SELECT image_id FROM images WHERE name=?;', (image_name,))
-        return next(cursor)[0]
+        image_id = cursor.fetchone()
+        if image_id is None:
+            return None
+        return image_id[0]
 
     def read_matches_from_pair_id(self, pair_id):
         cursor = self.execute('SELECT data FROM two_view_geometries WHERE pair_id=?;', (pair_id,))
-        row = next(cursor)
-        if row[0] is None:
-            matches = None
-        else:
-            matches = np.fromstring(row[0], dtype=np.uint32).reshape(-1, 2)
+        # print(len(list(cursor)))
+        matches = cursor.fetchone()
+        if matches is None:
+            return None
+        matches = np.fromstring(matches[0], dtype=np.uint32).reshape(-1, 2)
         return matches
 
     def read_keypoints_from_image_id(self, image_id):
         cursor = self.execute(
             'SELECT data FROM keypoints WHERE image_id=?;',  (image_id,))
-        row = next(cursor)
-        keypoints = np.fromstring(row[0], dtype=np.float32).reshape(-1, 6)
+        keypoints = cursor.fetchone()
+        if keypoints is None:
+            return None
+        keypoints = np.fromstring(keypoints[0], dtype=np.float32).reshape(-1, 6)
         return keypoints
 
 def example_usage():
