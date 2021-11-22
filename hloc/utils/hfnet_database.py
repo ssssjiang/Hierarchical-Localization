@@ -103,7 +103,7 @@ class HFNetDatabase(sqlite3.Connection):
         cursor = self.execute(
             'SELECT pixel FROM keypoints WHERE image_id=?;',  (image_id,))
         keypoints = cursor.fetchone()
-        if keypoints is None:
+        if keypoints is None or keypoints[0] is None:
             return None
         keypoints = np.fromstring(keypoints[0], dtype=np.float32).reshape(-1, 2)
         return keypoints

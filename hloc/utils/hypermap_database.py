@@ -188,7 +188,7 @@ class HyperMapDatabase(sqlite3.Connection):
     def read_image_id_from_name(self, image_name):
         cursor = self.execute('SELECT image_id FROM images WHERE name=?;', (image_name,))
         image_id = cursor.fetchone()
-        if image_id is None:
+        if image_id is None or image_id[0] is None:
             return None
         return image_id[0]
 
@@ -196,7 +196,7 @@ class HyperMapDatabase(sqlite3.Connection):
         cursor = self.execute('SELECT data FROM two_view_geometries WHERE pair_id=?;', (pair_id,))
         # print(len(list(cursor)))
         matches = cursor.fetchone()
-        if matches is None:
+        if matches is None or matches[0] is None:
             return None
         matches = np.fromstring(matches[0], dtype=np.uint32).reshape(-1, 2)
         return matches
@@ -205,7 +205,7 @@ class HyperMapDatabase(sqlite3.Connection):
         cursor = self.execute(
             'SELECT data FROM keypoints WHERE image_id=?;',  (image_id,))
         keypoints = cursor.fetchone()
-        if keypoints is None:
+        if keypoints is None or keypoints[0] is None:
             return None
         keypoints = np.fromstring(keypoints[0], dtype=np.float32).reshape(-1, 6)
         return keypoints
