@@ -52,6 +52,14 @@ confs = {
             'resize_force': True,
         },
     },
+    'superpoint_mower': {
+        'model': {
+            'name': 'superpoint',
+            'nms_radius': 3,
+            'keypoint_threshold':0.003,
+            'max_keypoints': 1024,
+        },
+    },
     'superpoint_inloc': {
         'output': 'feats-superpoint-n4096-r1600',
         'model': {
@@ -179,7 +187,7 @@ def main(conf, image_dir, export_dir=None, as_half=False,
                  f'\n{pprint.pformat(conf)}')
 
     loader = ImageDataset(image_dir, conf['preprocessing'], image_list)
-    loader = torch.utils.data.DataLoader(loader, num_workers=1)
+    loader = torch.utils.data.DataLoader(loader, num_workers=4)
 
     if feature_path is None:
         feature_path = Path(export_dir, conf['output']+'.h5')

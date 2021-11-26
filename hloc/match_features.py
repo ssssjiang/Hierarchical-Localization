@@ -29,6 +29,14 @@ confs = {
             'sinkhorn_iterations': 50,
         },
     },
+    'superglue_mower': {
+        'model': {
+            'name': 'superglue',
+            'weights': 'outdoor',
+            'sinkhorn_iterations': 50,
+            'match_threshold': 0.2
+        }
+    },
     'NN-superpoint': {
         'output': 'matches-NN-mutual-dist.7',
         'model': {
