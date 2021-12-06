@@ -80,7 +80,7 @@ class HFNetDatabase(sqlite3.Connection):
 
     def add_keypoints(self, image_id, image_name, keypoints):
         assert (len(keypoints.shape) == 2)
-        assert (keypoints.shape[1] in [2, 4, 6])
+        assert (keypoints.shape[1] in [3, 4, 6])
 
         keypoints = np.asarray(keypoints, np.float32)
         self.execute(
@@ -99,14 +99,23 @@ class HFNetDatabase(sqlite3.Connection):
             "INSERT INTO global_descriptors VALUES (?, ?, ?, ?)",
             (image_id,) + (image_name, ) + global_descriptors.shape + (array_to_blob(global_descriptors),))
 
-    def read_keypoints_from_image_id(self, image_id):
+    def read_keypoints_from_image_name(self, image_name):
         cursor = self.execute(
-            'SELECT pixel FROM keypoints WHERE image_id=?;',  (image_id,))
+            'SELECT pixel FROM keypoints WHERE name=?;',  (image_name,))
         keypoints = cursor.fetchone()
         if keypoints is None or keypoints[0] is None:
             return None
-        keypoints = np.fromstring(keypoints[0], dtype=np.float32).reshape(-1, 2)
+        keypoints = np.fromstring(keypoints[0], dtype=np.float32).reshape(-1, 3)
         return keypoints
+
+    def read_local_descriptors_from_image_name(self, image_name):
+        cursor = self.execute(
+            'SELECT data FROM local_descriptors WHERE name=?;',  (image_name,))
+        local_descriptors = cursor.fetchone()
+        if local_descriptors is None or local_descriptors[0] is None:
+            return None
+        local_descriptors = np.fromstring(local_descriptors[0], dtype=np.float32).reshape(-1, 256)
+        return local_descriptors
 
 
 def example_usage():

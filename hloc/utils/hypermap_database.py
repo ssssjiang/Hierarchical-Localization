@@ -210,6 +210,25 @@ class HyperMapDatabase(sqlite3.Connection):
         keypoints = np.fromstring(keypoints[0], dtype=np.float32).reshape(-1, 6)
         return keypoints
 
+    def read_camera_params_from_camera_id(self, camera_id):
+        cursor = self.execute(
+            'SELECT params FROM cameras WHERE camera_id=?;',  (camera_id,))
+        params = cursor.fetchone()
+        if params is None or params[0] is None:
+            return None
+        params = np.fromstring(params[0], dtype=np.float64).reshape(-1, 6)
+        return params
+
+    def read_camera_params(self):
+        cursor = self.execute(
+            'SELECT params FROM cameras;')
+        params = cursor.fetchone()
+        if params is None or params[0] is None:
+            return None
+        params = np.fromstring(params[0], dtype=np.float64).reshape(-1, 6)
+        return params
+
+
 def example_usage():
     import os
     import argparse
