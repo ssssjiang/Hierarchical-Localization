@@ -154,6 +154,19 @@ class HyperMapDatabase(sqlite3.Connection):
             "INSERT INTO descriptors VALUES (?, ?, ?, ?)",
             (image_id,) + descriptors.shape + (array_to_blob(descriptors),))
 
+    def replace_matches(self, image_id1, image_id2, matches):
+        assert (len(matches.shape) == 2)
+        assert (matches.shape[1] == 2)
+
+        if image_id1 > image_id2:
+            matches = matches[:, ::-1]
+
+        pair_id = image_ids_to_pair_id(image_id1, image_id2)
+        matches = np.asarray(matches, np.uint32)
+        self.execute(
+            "REPLACE INTO matches VALUES (?, ?, ?, ?)",
+            (pair_id,) + matches.shape + (array_to_blob(matches),))
+
     def add_matches(self, image_id1, image_id2, matches):
         assert (len(matches.shape) == 2)
         assert (matches.shape[1] == 2)
