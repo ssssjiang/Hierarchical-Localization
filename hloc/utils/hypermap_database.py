@@ -46,7 +46,10 @@ CREATE TABLE IF NOT EXISTS two_view_geometries (
     config INTEGER NOT NULL,
     qvec      BLOB,
     tvec      BLOB,
-    tri_angle REAL)
+    tri_angle REAL,
+    F BLOB,
+    E BLOB,
+    H BLOB)
 """
 
 CREATE_KEYPOINTS_TABLE = """CREATE TABLE IF NOT EXISTS keypoints (
@@ -180,7 +183,7 @@ class HyperMapDatabase(sqlite3.Connection):
             "INSERT INTO matches VALUES (?, ?, ?, ?)",
             (pair_id,) + matches.shape + (array_to_blob(matches),))
 
-    def add_two_view_geometry(self, image_id1, image_id2, matches,
+    def replace_two_view_geometry(self, image_id1, image_id2, matches,
                               qvec, tvec, tri_angle, config=2):
         assert (len(matches.shape) == 2)
         assert (matches.shape[1] == 2)
@@ -194,9 +197,29 @@ class HyperMapDatabase(sqlite3.Connection):
         tvec = np.asarray(tvec, dtype=np.float64)
         tri_angle = np.asarray(tri_angle, dtype=np.float64)
         self.execute(
-            "INSERT INTO two_view_geometries VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            "REPLACE INTO two_view_geometries VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (pair_id,) + matches.shape + (array_to_blob(matches), config,
-                                          array_to_blob(qvec), array_to_blob(qvec), tri_angle))
+                                          array_to_blob(qvec), array_to_blob(qvec), tri_angle,
+                                          None, None, None))
+
+    def add_two_view_geometry(self, image_id1, image_id2, matches,
+                              qvec, tvec, tri_angle, config=2):
+        assert (len(matches.shape) == 2)
+        assert (matches.shape[1] == 2)
+
+        if image_id1 > image_id2:
+            matches = matches[:, ::-1]
+
+        pair_id = image_ids_to_pair_id(image_id1, image_id2)
+        matches = np.asarray(matches, np.uint32)
+        qvec = np.asarray(qvec, dtype=np.float64)
+        tvec = np.asarray(tvec, dtype=np.float64)
+        # tri_angle = np.asarray(tri_angle, dtype=np.float64)
+        self.execute(
+            "INSERT INTO two_view_geometries VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (pair_id,) + matches.shape + (array_to_blob(matches), config,
+                                          array_to_blob(qvec), array_to_blob(qvec), tri_angle,
+                                          None, None, None))
 
     def read_image_id_from_name(self, image_name):
         cursor = self.execute('SELECT image_id FROM images WHERE name=?;', (image_name,))
