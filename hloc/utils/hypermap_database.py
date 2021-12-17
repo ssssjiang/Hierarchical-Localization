@@ -184,7 +184,7 @@ class HyperMapDatabase(sqlite3.Connection):
             (pair_id,) + matches.shape + (array_to_blob(matches),))
 
     def replace_two_view_geometry(self, image_id1, image_id2, matches,
-                              qvec, tvec, tri_angle, config=2):
+                                  qvec, tvec, tri_angle, config=2):
         assert (len(matches.shape) == 2)
         assert (matches.shape[1] == 2)
 
@@ -195,11 +195,11 @@ class HyperMapDatabase(sqlite3.Connection):
         matches = np.asarray(matches, np.uint32)
         qvec = np.asarray(qvec, dtype=np.float64)
         tvec = np.asarray(tvec, dtype=np.float64)
-        tri_angle = np.asarray(tri_angle, dtype=np.float64)
+        # tri_angle = np.asarray(tri_angle, dtype=np.float64)
         self.execute(
             "REPLACE INTO two_view_geometries VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (pair_id,) + matches.shape + (array_to_blob(matches), config,
-                                          array_to_blob(qvec), array_to_blob(qvec), tri_angle,
+                                          array_to_blob(qvec), array_to_blob(tvec), tri_angle.astype(float),
                                           None, None, None))
 
     def add_two_view_geometry(self, image_id1, image_id2, matches,
@@ -218,8 +218,26 @@ class HyperMapDatabase(sqlite3.Connection):
         self.execute(
             "INSERT INTO two_view_geometries VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (pair_id,) + matches.shape + (array_to_blob(matches), config,
-                                          array_to_blob(qvec), array_to_blob(qvec), tri_angle,
+                                          array_to_blob(qvec), array_to_blob(tvec), tri_angle.astype(float),
                                           None, None, None))
+
+    def read_q_from_pair_id(self, pair_id):
+        cursor = self.execute('SELECT qvec FROM two_view_geometries WHERE pair_id=?;', (pair_id,))
+        # print(len(list(cursor)))
+        qvec = cursor.fetchone()
+        if qvec is None or qvec[0] is None:
+            return None
+        qvec = np.fromstring(qvec[0], dtype=np.float64)
+        return qvec
+
+    def read_t_from_pair_id(self, pair_id):
+        cursor = self.execute('SELECT tvec FROM two_view_geometries WHERE pair_id=?;', (pair_id,))
+        # print(len(list(cursor)))
+        tvec = cursor.fetchone()
+        if tvec is None or tvec[0] is None:
+            return None
+        tvec = np.fromstring(tvec[0], dtype=np.float64).reshape(3, 1)
+        return tvec
 
     def read_image_id_from_name(self, image_name):
         cursor = self.execute('SELECT image_id FROM images WHERE name=?;', (image_name,))
@@ -239,7 +257,7 @@ class HyperMapDatabase(sqlite3.Connection):
 
     def read_keypoints_from_image_id(self, image_id):
         cursor = self.execute(
-            'SELECT data FROM keypoints WHERE image_id=?;',  (image_id,))
+            'SELECT data FROM keypoints WHERE image_id=?;', (image_id,))
         keypoints = cursor.fetchone()
         if keypoints is None or keypoints[0] is None:
             return None
@@ -248,7 +266,7 @@ class HyperMapDatabase(sqlite3.Connection):
 
     def read_camera_params_from_camera_id(self, camera_id):
         cursor = self.execute(
-            'SELECT params FROM cameras WHERE camera_id=?;',  (camera_id,))
+            'SELECT params FROM cameras WHERE camera_id=?;', (camera_id,))
         params = cursor.fetchone()
         if params is None or params[0] is None:
             return None
