@@ -2,7 +2,6 @@ import argparse
 from pathlib import Path
 import numpy as np
 import scipy.spatial
-import torch
 
 from . import logger
 from .utils.read_write_model import read_images_binary
@@ -24,13 +23,19 @@ def get_pairwise_distances(images):
     Rs = np.stack(Rs, 0)
     ts = np.stack(ts, 0)
 
+    # Invert the poses from world-to-camera to camera-to-world.
     Rs = Rs.transpose(0, 2, 1)
     ts = -(Rs @ ts[:, :, None])[:, :, 0]
 
     dist = scipy.spatial.distance.squareform(scipy.spatial.distance.pdist(ts))
-    trace = np.einsum('nji,mji->mn', Rs, Rs, optimize=True)
-    dR = np.clip((trace - 1) / 2, -1., 1.)
-    dR = np.rad2deg(np.abs(np.arccos(dR)))
+
+    # Instead of computing the angle between two camera orientations,
+    # we compute the angle between the principal axes, as two images rotated
+    # around their principal axis still observe the same scene.
+    axes = Rs[:, :, -1]
+    dots = np.einsum('mi,ni->mn', axes, axes, optimize=True)
+    dR = np.rad2deg(np.arccos(np.clip(dots, -1., 1.)))
+
     return ids, dist, dR
 
 
@@ -41,7 +46,7 @@ def main(model, output, num_matched, rotation_threshold=DEFAULT_ROT_THRESH):
     logger.info(
         f'Obtaining pairwise distances between {len(images)} images...')
     ids, dist, dR = get_pairwise_distances(images)
-    scores = torch.from_numpy(-dist)
+    scores = -dist
 
     invalid = (dR >= rotation_threshold)
     np.fill_diagonal(invalid, True)

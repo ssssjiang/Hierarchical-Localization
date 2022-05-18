@@ -90,31 +90,40 @@ confs = {
     'sift': {
         'output': 'feats-sift',
         'model': {
-            'name': 'sift'
+            'name': 'dog'
         },
         'preprocessing': {
             'grayscale': True,
             'resize_max': 1600,
         },
     },
-    'dir': {
-        'output': 'global-feats-dir',
+    'sosnet': {
+        'output': 'feats-sosnet',
         'model': {
-            'name': 'dir',
+            'name': 'dog',
+            'descriptor': 'sosnet'
         },
         'preprocessing': {
-            'resize_max': 1024,
+            'grayscale': True,
+            'resize_max': 1600,
         },
+    },
+    # Global descriptors
+    'dir': {
+        'output': 'global-feats-dir',
+        'model': {'name': 'dir'},
+        'preprocessing': {'resize_max': 1024},
     },
     'netvlad': {
         'output': 'global-feats-netvlad',
-        'model': {
-            'name': 'netvlad',
-        },
-        'preprocessing': {
-            'resize_max': 1024,
-        },
+        'model': {'name': 'netvlad'},
+        'preprocessing': {'resize_max': 1024},
     },
+    'openibl': {
+        'output': 'global-feats-openibl',
+        'model': {'name': 'openibl'},
+        'preprocessing': {'resize_max': 1024},
+    }
 }
 
 
@@ -241,6 +250,8 @@ def main(conf: Dict,
             size = np.array(data['image'].shape[-2:][::-1])
             scales = (original_size / size).astype(np.float32)
             pred['keypoints'] = (pred['keypoints'] + .5) * scales[None] - .5
+            # add keypoint uncertainties scaled to the original resolution
+            uncertainty = getattr(model, 'detection_noise', 1) * scales.mean()
 
         if as_half:
             for k in pred:
@@ -255,6 +266,8 @@ def main(conf: Dict,
                 grp = fd.create_group(name)
                 for k, v in pred.items():
                     grp.create_dataset(k, data=v)
+                if 'keypoints' in pred:
+                    grp['keypoints'].attrs['uncertainty'] = uncertainty
             except OSError as error:
                 if 'No space left on device' in error.args[0]:
                     logger.error(
