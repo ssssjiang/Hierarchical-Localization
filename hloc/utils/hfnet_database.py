@@ -105,7 +105,9 @@ class HFNetDatabase(sqlite3.Connection):
         keypoints = cursor.fetchone()
         if keypoints is None or keypoints[0] is None:
             return None
-        keypoints = np.fromstring(keypoints[0], dtype=np.float32).reshape(-1, 3)
+        # for superpoints
+        #  keypoints = np.fromstring(keypoints[0], dtype=np.float32).reshape(-1, 3)
+        keypoints = np.fromstring(keypoints[0], dtype=np.float32).reshape(-1, 2)
         return keypoints
 
     def read_local_descriptors_from_image_name(self, image_name):

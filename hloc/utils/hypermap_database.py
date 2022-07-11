@@ -239,6 +239,15 @@ class HyperMapDatabase(sqlite3.Connection):
         tvec = np.fromstring(tvec[0], dtype=np.float64).reshape(3, 1)
         return tvec
 
+    def read_config_from_pair_id(self, pair_id):
+        cursor = self.execute('SELECT config FROM two_view_geometries WHERE pair_id=?;', (pair_id,))
+        # print(len(list(cursor)))
+        config = cursor.fetchone()
+        if config is None or config[0] is None:
+            return None
+        config = config[0]
+        return config
+
     def read_image_id_from_name(self, image_name):
         cursor = self.execute('SELECT image_id FROM images WHERE name=?;', (image_name,))
         image_id = cursor.fetchone()
@@ -261,7 +270,10 @@ class HyperMapDatabase(sqlite3.Connection):
         keypoints = cursor.fetchone()
         if keypoints is None or keypoints[0] is None:
             return None
-        keypoints = np.fromstring(keypoints[0], dtype=np.float32).reshape(-1, 6)
+        # for superpoints
+        # keypoints = np.fromstring(keypoints[0], dtype=np.float32).reshape(-1, 6)
+        # for hfnet + segment label
+        keypoints = np.fromstring(keypoints[0], dtype=np.float32).reshape(-1, 7)
         return keypoints
 
     def read_camera_params_from_camera_id(self, camera_id):
@@ -270,7 +282,10 @@ class HyperMapDatabase(sqlite3.Connection):
         params = cursor.fetchone()
         if params is None or params[0] is None:
             return None
-        params = np.fromstring(params[0], dtype=np.float64).reshape(-1, 6)
+        # for DS model
+        # params = np.fromstring(params[0], dtype=np.float64).reshape(-1, 6)
+        # for no distortion.
+        params = np.fromstring(params[0], dtype=np.float64).reshape(-1, 4)
         return params
 
     def read_camera_params(self):
@@ -279,7 +294,10 @@ class HyperMapDatabase(sqlite3.Connection):
         params = cursor.fetchone()
         if params is None or params[0] is None:
             return None
-        params = np.fromstring(params[0], dtype=np.float64).reshape(-1, 6)
+        # for DS model
+        #  params = np.fromstring(params[0], dtype=np.float64).reshape(-1, 6)
+        # for no distortion.
+        params = np.fromstring(params[0], dtype=np.float64).reshape(-1, 4)
         return params
 
 
