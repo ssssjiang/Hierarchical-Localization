@@ -109,7 +109,7 @@ def main(
     pairs: Path,
     features: Path,
     matches: Path,
-    camera_mode: pycolmap.CameraMode = pycolmap.CameraMode.AUTO,
+    camera_mode: pycolmap.CameraMode = pycolmap.CameraMode.SINGLE,
     verbose: bool = False,
     skip_geometric_verification: bool = False,
     min_match_score: Optional[float] = None,
@@ -138,15 +138,16 @@ def main(
     )
     if not skip_geometric_verification:
         estimation_and_geometric_verification(database, pairs, verbose)
-    reconstruction = run_reconstruction(
-        sfm_dir, database, image_dir, verbose, mapper_options
-    )
-    if reconstruction is not None:
-        logger.info(
-            f"Reconstruction statistics:\n{reconstruction.summary()}"
-            + f"\n\tnum_input_images = {len(image_ids)}"
-        )
-    return reconstruction
+    # reconstruction = run_reconstruction(
+    #     sfm_dir, database, image_dir, verbose, mapper_options
+    # )
+    # if reconstruction is not None:
+    #     logger.info(
+    #         f"Reconstruction statistics:\n{reconstruction.summary()}"
+    #         + f"\n\tnum_input_images = {len(image_ids)}"
+    #     )
+    # return reconstruction
+    return None
 
 
 if __name__ == "__main__":

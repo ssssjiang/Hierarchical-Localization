@@ -3,7 +3,7 @@ import random
 
 import numpy as np
 import pycolmap
-from matplotlib import cm
+from matplotlib import cm, pyplot as plt
 
 from .utils.io import read_image
 from .utils.viz import add_text, cm_RdGn, plot_images, plot_keypoints, plot_matches
@@ -14,16 +14,22 @@ def visualize_sfm_2d(
 ):
     assert image_dir.exists()
     if not isinstance(reconstruction, pycolmap.Reconstruction):
+        print("Converting reconstruction to pycolmap.Reconstruction")
         reconstruction = pycolmap.Reconstruction(reconstruction)
 
+    # 确定要处理的图像 ID
     if not selected:
         image_ids = reconstruction.reg_image_ids()
         selected = random.Random(seed).sample(image_ids, min(n, len(image_ids)))
 
     for i in selected:
+        print(f"Processing image ID: {i}")
         image = reconstruction.images[i]
+        print(f"Image name: {image.name}")
         keypoints = np.array([p.xy for p in image.points2D])
+        print(f"Number of keypoints: {len(keypoints)}")
         visible = np.array([p.has_point3D() for p in image.points2D])
+        print(f"Number of visible points: {np.count_nonzero(visible)}")
 
         if color_by == "visibility":
             color = [(0, 0, 1) if v else (1, 0, 0) for v in visible]
@@ -38,6 +44,7 @@ def visualize_sfm_2d(
                 ]
             )
             max_, med_ = np.max(tl), np.median(tl[tl > 1])
+            print(f"Max track length: {max_}, Median track length: {med_}")
             tl = np.log(tl)
             color = cm.jet(tl / tl.max()).tolist()
             text = f"max/median track length: {max_}/{med_}"
@@ -57,10 +64,12 @@ def visualize_sfm_2d(
             raise NotImplementedError(f"Coloring not implemented: {color_by}.")
 
         name = image.name
+        print(f"Reading image: {image_dir / name}")
         plot_images([read_image(image_dir / name)], dpi=dpi)
         plot_keypoints([keypoints], colors=[color], ps=4)
         add_text(0, text)
         add_text(0, name, pos=(0.01, 0.01), fs=5, lcolor=None, va="bottom")
+        plt.show()
 
 
 def visualize_loc(

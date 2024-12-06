@@ -195,9 +195,18 @@ def plot_reconstruction(
     xyzs = [p3D.xyz for p3D in p3Ds]
     if points_rgb:
         pcolor = [p3D.color for p3D in p3Ds]
+        print(f"Using RGB colors for points, sample color: {pcolor[:5]}")
     else:
         pcolor = color
+        print(f"Using uniform color for points: {color}")
+
+    # Plot points
     if points:
+        print(f"Plotting {len(xyzs)} points...")
         plot_points(fig, np.array(xyzs), color=pcolor, ps=1, name=name)
+
+    # Plot cameras
     if cameras:
+        print(f"Cameras in reconstruction: {len(rec.images)}")
+        print("Plotting cameras...")
         plot_cameras(fig, rec, color=color, legendgroup=name, size=cs)
