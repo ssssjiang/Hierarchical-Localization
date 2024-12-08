@@ -109,7 +109,7 @@ def main(
     pairs: Path,
     features: Path,
     matches: Path,
-    camera_mode: pycolmap.CameraMode = pycolmap.CameraMode.SINGLE,
+    camera_mode: pycolmap.CameraMode = pycolmap.CameraMode.AUTO,
     verbose: bool = False,
     skip_geometric_verification: bool = False,
     min_match_score: Optional[float] = None,
